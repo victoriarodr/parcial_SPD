@@ -1,7 +1,7 @@
 /*
 Proyecto montecargas Victoria Rodriguez Rosas DIV D
 */
-
+#include <Servo.h>
 #define A 8
 #define B 7
 #define C A1
@@ -14,6 +14,15 @@ Proyecto montecargas Victoria Rodriguez Rosas DIV D
 #define BOTON_SUBIR 4
 #define BOTON_PAUSAR 3
 #define BOTON_BAJAR 2
+#define LED_AZUL 11
+#define SERVO 9
+
+const int SENSOR=A4;
+int INCLINACION = 10;
+int estado = 0;
+int val = 0;
+Servo myServo;
+int contadorGrados = 0;
 
 void apagar_display();
 void encender_display(int numero);
@@ -38,20 +47,49 @@ void setup()
     pinMode(BOTON_PAUSAR, INPUT_PULLUP);
     pinMode(BOTON_BAJAR, INPUT_PULLUP);
     Serial.begin(9600);
+  	pinMode(SENSOR, INPUT);
+  	pinMode(INCLINACION, INPUT);
+  	pinMode(LED_AZUL, OUTPUT);
+   	myServo.attach(SERVO,550,2500);
+  	myServo.write(180);
 }
 
 int piso = 0;
 bool encendido = false;
+int valorDelSensor = 0;
+
 
 void loop()
 {
     encender_montacargas(encendido);
+  
+  val = analogRead(SENSOR);
+  estado = digitalRead(INCLINACION);
+  
+  if(estado == LOW && val == LOW)
+  {
+    digitalWrite(LED_AZUL, HIGH);
+    Serial.print("El ascensor se encuentra inclinado y con poca luz\n");
+    contadorGrados++;
+      myServo.write(contadorGrados);
+      delay(100);
+      if(contadorGrados == 180)
+      {
+        myServo.write(0);
+        contadorGrados = 0;
+        delay(50);
+      }
+  }
+  else
+  {
+    digitalWrite(LED_AZUL, LOW);
     if (encendido == true)
     {
         prender_apagar_leds(false);
         encender_display(piso);
         funcionamiento_botones(piso);
     }
+  }
 }
 
 
@@ -154,7 +192,7 @@ void encender_montacargas(bool &encendido)
         {
             delay(100);
         }
-        encendido = true;
+      encendido = true;
     }
 }
 
@@ -189,7 +227,7 @@ void funcionamiento_montacargas(int piso)
         delay(1);
     }
     apagar_display();
-    Serial.print("Usted está en el piso: ");
+    Serial.print("Usted esta en el piso: ");
     Serial.println(piso);
     delay(100);
 }
